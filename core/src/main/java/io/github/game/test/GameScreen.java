@@ -23,7 +23,7 @@ public class GameScreen implements Screen {
         camera.centerOn(camera.getCamera().viewportWidth / 2f,
             camera.getCamera().viewportHeight / 2f);
 
-        atlasPlayer = new TextureAtlas(Utils.getInternalPath("atlas/map_atlas.atlas"));
+        atlasPlayer = new TextureAtlas(Utils.getInternalPath("atlas/player_atlas.atlas"));
         batch = new SpriteBatch();
         background = new Texture(Utils.getInternalPath("map/tiles_background/background.png"));
 
