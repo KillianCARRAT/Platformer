@@ -12,8 +12,19 @@ public class Player {
     private boolean revert = false;
     private TextureAtlas atlasPlayer;
 
+    // The animations
+    // On ground
     private Animation<TextureRegion> sprintAnimation;
     private Animation<TextureRegion> idleAnimation;
+    // Jump on the spot
+    private Animation<TextureRegion> jumpIdleAnimation;
+    private Animation<TextureRegion> landingIdleAnimation;
+    private Animation<TextureRegion> levitatingIdleAnimation;
+    // Jump on side
+    private Animation<TextureRegion> jumpSideAnimation;
+    private Animation<TextureRegion> landingSideAnimation;
+    private Animation<TextureRegion> levitatingSideAnimation;
+
     private Animation<TextureRegion> currentAnimation;
     private float stateTime;
 
@@ -37,6 +48,39 @@ public class Player {
             atlasPlayer.findRegion("player_idle3")
         );
 
+        jumpIdleAnimation = new Animation<>(0.1f,
+            atlasPlayer.findRegion("jump_idle0"),
+            atlasPlayer.findRegion("jump_idle1")
+        );
+
+        landingIdleAnimation = new Animation<>(0.1f,
+            atlasPlayer.findRegion("landing_idle0"),
+            atlasPlayer.findRegion("landing_idle1")
+        );
+
+        jumpSideAnimation = new Animation<>(0.1f,
+            atlasPlayer.findRegion("jump_side0"),
+            atlasPlayer.findRegion("jump_side1"),
+            atlasPlayer.findRegion("jump_side2")
+        );
+
+        landingSideAnimation = new Animation<>(0.1f,
+            atlasPlayer.findRegion("landing_side0"),
+            atlasPlayer.findRegion("landing_side1"),
+            atlasPlayer.findRegion("landing_side2")
+        );
+
+        levitatingIdleAnimation = new Animation<>(0.1f,
+            atlasPlayer.findRegion("levitating_idle0"),
+            atlasPlayer.findRegion("levitating_idle1")
+        );
+
+        levitatingSideAnimation = new Animation<>(0.1f,
+            atlasPlayer.findRegion("levitating_side0"),
+            atlasPlayer.findRegion("levitating_side1"),
+            atlasPlayer.findRegion("levitating_side2")
+        );
+
         currentAnimation = idleAnimation;
         stateTime = 0;
     }
@@ -48,7 +92,13 @@ public class Player {
         stateTime += deltaTime;
 
         if (velocity.len() > 0) {
-            currentAnimation = sprintAnimation;
+            if (velocity.y > 0) {
+                currentAnimation = (velocity.x == 0) ? jumpIdleAnimation : jumpSideAnimation;
+            } else if (velocity.y < 0) {
+                currentAnimation = (velocity.x == 0) ? landingIdleAnimation : landingSideAnimation;
+            } else {
+                currentAnimation = sprintAnimation;
+            }
         } else {
             currentAnimation = idleAnimation;
         }
