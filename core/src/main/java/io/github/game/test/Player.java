@@ -11,6 +11,8 @@ public class Player {
     private Vector2 velocity;
     private boolean revert = false;
     private TextureAtlas atlasPlayer;
+    private float widthPlayer;
+    private float heightPlayer;
 
     // The animations
     // On ground
@@ -28,12 +30,15 @@ public class Player {
     private Animation<TextureRegion> currentAnimation;
     private float stateTime;
 
-    public Player(TextureAtlas atlasPlayer, float x, float y) {
+    public Player(TextureAtlas atlasPlayer, float x, float y, float widthPlayer, float heightPlayer) {
         this.atlasPlayer = atlasPlayer;
         this.position = new Vector2(x, y);
         this.velocity = new Vector2(0, 0);
         player = new Sprite(atlasPlayer.findRegion("player_idle1"));
-        player.setScale(0.3f);
+        player.setBounds(position.x + (widthPlayer / 2 - widthPlayer), position.y + (heightPlayer / 2 - heightPlayer), widthPlayer, heightPlayer);
+
+        this.widthPlayer = widthPlayer;
+        this.heightPlayer = heightPlayer;
 
         sprintAnimation = new Animation<TextureRegion>(0.1f,
             atlasPlayer.findRegion("player_sprint1"),
@@ -88,7 +93,8 @@ public class Player {
 
     public void update(float deltaTime) {
         position.add(velocity.x * deltaTime, velocity.y * deltaTime);
-        player.setPosition(position.x, position.y);
+        player.setPosition(position.x + (widthPlayer / 2 - widthPlayer), position.y + (heightPlayer / 2 - heightPlayer));
+
 
         stateTime += deltaTime;
 
@@ -110,6 +116,7 @@ public class Player {
         player.setRegion(currentFrame);
         revert(revert);
         player.draw(batch);
+        // System.out.println(player.getX() + " " + player.getY());
     }
 
     public void move(float x, float y) {
@@ -133,8 +140,8 @@ public class Player {
     }
 
     public void handleInput() {
-        float speedX = 40f;
-        float speedY = 25f;
+        float speedX = 16f;
+        float speedY = 16f;
 
 
         if ((Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) &&
@@ -161,5 +168,9 @@ public class Player {
             stop();
         }
 
+    }
+
+    public Sprite getPlayer() {
+        return player;
     }
 }

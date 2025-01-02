@@ -30,7 +30,7 @@ public class Orthographic implements ApplicationListener {
         camera.update();
 
         batch = new SpriteBatch();
-        background = new Texture(Gdx.files.internal("map/tiles_background/background.png"));
+        background = new Texture(Gdx.files.internal("graphics/tiles_background/background.png"));
 
     }
 

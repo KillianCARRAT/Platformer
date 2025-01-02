@@ -38,7 +38,7 @@ public class Perspective implements ApplicationListener {
 
         batch = new ModelBatch();
         builder = new ModelBuilder();
-        texture = new Texture(Gdx.files.internal("map/tiles_background/background.png"));
+        texture = new Texture(Gdx.files.internal("graphics/tiles_background/background.png"));
         Material material = new Material(new TextureAttribute(TextureAttribute.Diffuse, texture));
         int attributes = VertexAttributes.Usage.Position;
         Model model = builder.createBox(3, 3, 3, material, attributes);
