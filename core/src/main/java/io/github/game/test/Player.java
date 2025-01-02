@@ -33,6 +33,7 @@ public class Player {
         this.position = new Vector2(x, y);
         this.velocity = new Vector2(0, 0);
         player = new Sprite(atlasPlayer.findRegion("player_idle1"));
+        player.setScale(0.3f);
 
         sprintAnimation = new Animation<TextureRegion>(0.1f,
             atlasPlayer.findRegion("player_sprint1"),
