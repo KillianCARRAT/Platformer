@@ -6,16 +6,13 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.maps.MapObject;
-import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.ScreenUtils;
 import io.github.game.test.camera.Orthographic;
 
 public class GameScreen implements Screen {
-    private final Platformer game;
 
     // Display
     private final SpriteBatch batch;
@@ -31,18 +28,20 @@ public class GameScreen implements Screen {
     private final int heightTile;
     private final int countTileWidthMap;
     private final int countTileHeightMap;
+    private final float worldWidth;
+    private final float worldHeight;
 
     // Player
     private final Player player;
     private float spawnPointX;
     private float spawnPointY;
+    private float goalPointX;
+    private float goalPointY;
 
 
-    public GameScreen(Platformer game) {
-        this.game = game;
+    public GameScreen() {
         background = new Texture(Utils.getInternalPath("graphics/tiles_background/background.png"));
-
-
+        
         camera = new Orthographic();
 
         map = new TmxMapLoader().load("maps/mapTuto.tmx");
@@ -52,28 +51,36 @@ public class GameScreen implements Screen {
         heightTile = (int) map.getProperties().get("tileheight");
         countTileWidthMap = (int) map.getProperties().get("width");
         countTileHeightMap = (int) map.getProperties().get("height");
+        worldWidth = countTileWidthMap * widthTile;
+        worldHeight = countTileHeightMap * heightTile;
+
 
         atlasPlayer = new TextureAtlas(Utils.getInternalPath("atlas/player_atlas.atlas"));
         batch = new SpriteBatch();
 
         shapeRenderer = new ShapeRenderer();
 
-        findSpawnPoint();
-        player = new Player(atlasPlayer, spawnPointX, spawnPointY, widthTile, heightTile);
+        findMapPoint();
+        player = new Player(atlasPlayer, spawnPointX, spawnPointY, widthTile, heightTile, this);
 
-        camera.centerOn(player.getPosition().x, player.getPosition().y);
+        cameraLimit();
 
     }
 
-    private void findSpawnPoint() {
+    private void findMapPoint() {
         for (MapObject object : map.getLayers().get("objectif").getObjects()) {
-            if (object instanceof RectangleMapObject) {
-                Rectangle rectangle = ((RectangleMapObject) object).getRectangle();
+            if (object.getProperties().containsKey("x") && object.getProperties().containsKey("y")) {
+                float x = (float) object.getProperties().get("x");
+                float y = (float) object.getProperties().get("y");
+
+                if ("goalPoint".equals(object.getName())) {
+                    goalPointX = x + (float) widthTile / 2;
+                    goalPointY = y + (float) heightTile / 2;
+                }
 
                 if ("spawnPoint".equals(object.getName())) {
-                    spawnPointX = rectangle.x + (float) widthTile / 2;
-                    spawnPointY = rectangle.y + (float) heightTile / 2;
-                    return;
+                    spawnPointX = x + (float) widthTile / 2;
+                    spawnPointY = y + (float) heightTile / 2;
                 }
             }
         }
@@ -92,9 +99,7 @@ public class GameScreen implements Screen {
         player.handleInput();
         player.update(delta);
 
-        camera.centerOn(player.getPosition().x, player.getPosition().y);
-
-
+        cameraLimit();
         camera.getCamera().zoom = player.getPlayer().getWidth() / 4;
 
 
@@ -107,7 +112,8 @@ public class GameScreen implements Screen {
         mapRenderer.setView(camera.getCamera());
         mapRenderer.render();
 
-        // drawHitbox();
+
+        drawHitbox();
     }
 
     private void drawHitbox() {
@@ -120,8 +126,8 @@ public class GameScreen implements Screen {
         float playerHeight = player.getPlayer().getHeight();
 
 
-        // shapeRenderer.rect(playerX + (playerWidth / 2 - playerWidth), playerY + (playerHeight / 2 - playerHeight), playerWidth, playerHeight);
-        shapeRenderer.circle(playerX, playerY, 1);
+        shapeRenderer.rect(playerX + (playerWidth / 2 - playerWidth), playerY + (playerHeight / 2 - playerHeight), playerWidth, playerHeight);
+        // shapeRenderer.circle(playerX, playerY, 1);
 
         shapeRenderer.end();
     }
@@ -155,10 +161,56 @@ public class GameScreen implements Screen {
         mapRenderer.dispose();
     }
 
-    private float calculateZoomFactor(float playerSize) {
-        float baseZoom = 1.0f;
-        float playerZoomFactor = playerSize / 100.0f;
+    public float getWidthTile() {
+        return widthTile;
+    }
 
-        return Math.max(0.5f, Math.min(baseZoom * playerZoomFactor, 2.0f));
+    public float getHeightTile() {
+        return heightTile;
+    }
+
+    public float getCountTileWidthMap() {
+        return countTileWidthMap;
+    }
+
+    public float getCountTileHeightMap() {
+        return countTileHeightMap;
+    }
+
+    public float getWorldWidth() {
+        return worldWidth;
+    }
+
+    public float getWorldHeight() {
+        return worldHeight;
+    }
+
+    public Orthographic getCamera() {
+        return camera;
+    }
+
+    public TiledMap getMap() {
+        return map;
+    }
+
+    private void cameraLimit() {
+        float cameraHalfWidth = camera.getViewportWidth() * 2;
+        float cameraHalfHeight = camera.getViewportHeight() * 2;
+
+        float cameraX = player.getPosition().x;
+        float cameraY = player.getPosition().y;
+
+        if (cameraX - cameraHalfWidth < 0) {
+            cameraX = cameraHalfWidth;
+        } else if (cameraX + cameraHalfWidth > worldWidth) {
+            cameraX = worldWidth - cameraHalfWidth;
+        }
+
+        if (cameraY - cameraHalfHeight < 0) {
+            cameraY = cameraHalfHeight;
+        } else if (cameraY + cameraHalfHeight > worldHeight) {
+            cameraY = worldHeight - cameraHalfHeight;
+        }
+        camera.centerOn(cameraX, cameraY);
     }
 }

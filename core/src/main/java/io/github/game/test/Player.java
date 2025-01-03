@@ -6,32 +6,40 @@ import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.Vector2;
 
 public class Player {
-    private Sprite player;
-    private Vector2 position;
-    private Vector2 velocity;
+    private final Sprite player;
+    private final Vector2 position;
+    private final Vector2 velocity;
     private boolean revert = false;
-    private TextureAtlas atlasPlayer;
-    private float widthPlayer;
-    private float heightPlayer;
+    private final float widthPlayer;
+    private final float heightPlayer;
+    private final GameScreen screen;
 
     // The animations
     // On ground
-    private Animation<TextureRegion> sprintAnimation;
-    private Animation<TextureRegion> idleAnimation;
+    private final Animation<TextureRegion> sprintAnimation;
+    private final Animation<TextureRegion> idleAnimation;
     // Jump on the spot
-    private Animation<TextureRegion> jumpIdleAnimation;
-    private Animation<TextureRegion> landingIdleAnimation;
-    private Animation<TextureRegion> levitatingIdleAnimation;
+    private final Animation<TextureRegion> jumpIdleAnimation;
+    private final Animation<TextureRegion> landingIdleAnimation;
+    private final Animation<TextureRegion> levitatingIdleAnimation;
     // Jump on side
-    private Animation<TextureRegion> jumpSideAnimation;
-    private Animation<TextureRegion> landingSideAnimation;
-    private Animation<TextureRegion> levitatingSideAnimation;
+    private final Animation<TextureRegion> jumpSideAnimation;
+    private final Animation<TextureRegion> landingSideAnimation;
+    private final Animation<TextureRegion> levitatingSideAnimation;
 
     private Animation<TextureRegion> currentAnimation;
     private float stateTime;
+    private float stateTimePreced;
 
-    public Player(TextureAtlas atlasPlayer, float x, float y, float widthPlayer, float heightPlayer) {
-        this.atlasPlayer = atlasPlayer;
+    // Move
+    private final float gravity = -32f;
+    private boolean isGrounded = true;
+    private float distanceInAir;
+    private float speedInAir = 64f;
+
+
+    public Player(TextureAtlas atlasPlayer, float x, float y, float widthPlayer, float heightPlayer, GameScreen screen) {
+        this.screen = screen;
         this.position = new Vector2(x, y);
         this.velocity = new Vector2(0, 0);
         player = new Sprite(atlasPlayer.findRegion("player_idle1"));
@@ -89,14 +97,24 @@ public class Player {
 
         currentAnimation = idleAnimation;
         stateTime = 0;
+        stateTimePreced = 0;
     }
 
     public void update(float deltaTime) {
+        stateTimePreced = stateTime;
+        stateTime += deltaTime;
+
+        if (!isGrounded) {
+            if (distanceInAir < 35) {
+                distanceInAir += (speedInAir * deltaTime);
+                velocity.y = speedInAir;
+            } else {
+                velocity.y = newPosY(gravity);
+            }
+        }
+
         position.add(velocity.x * deltaTime, velocity.y * deltaTime);
         player.setPosition(position.x + (widthPlayer / 2 - widthPlayer), position.y + (heightPlayer / 2 - heightPlayer));
-
-
-        stateTime += deltaTime;
 
         if (velocity.len() > 0) {
             if (velocity.y > 0) {
@@ -116,14 +134,32 @@ public class Player {
         player.setRegion(currentFrame);
         revert(revert);
         player.draw(batch);
-        // System.out.println(player.getX() + " " + player.getY());
     }
 
     public void move(float x, float y) {
         if (x != 0) {
             revert(x < 0);
         }
-        velocity.set(x, y);
+        velocity.set(newPosX(x), velocity.y);
+    }
+
+    public float newPosX(float x) {
+        float width = widthPlayer / 2;
+        if (position.x + x * (stateTime - stateTimePreced) < 32 + width) {
+            position.set(32 + width, position.y);
+            return 0;
+        }
+        return x;
+    }
+
+    public float newPosY(float y) {
+        float height = heightPlayer / 2;
+        if (position.y + y * (stateTime - stateTimePreced) < 32 + height) {
+            position.set(position.x, 32 + height);
+            isGrounded = true;
+            return 0;
+        }
+        return y;
     }
 
     public void stop() {
@@ -140,34 +176,40 @@ public class Player {
     }
 
     public void handleInput() {
-        float speedX = 16f;
-        float speedY = 16f;
+        float speedX = 16f * screen.getCountTileWidthMap() / 10;
 
+        boolean moveLeft = Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT);
+        boolean moveRight = Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT);
 
-        if ((Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) &&
-            (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP))) {
-            move(-speedX, speedY);
-        } else if ((Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) &&
-            (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP))) {
-            move(speedX, speedY);
-        } else if ((Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) &&
-            (Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN))) {
-            move(-speedX, -speedY);
-        } else if ((Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) &&
-            (Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN))) {
-            move(speedX, -speedY);
-        } else if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            move(-speedX, 0);
-        } else if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            move(speedX, 0);
-        } else if (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP)) {
-            move(0, speedY);
-        } else if (Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-            move(0, -speedY);
+        boolean jump = Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP) || Gdx.input.isKeyPressed(Input.Keys.SPACE);
+
+        if (isGrounded) {
+            if (jump) {
+                isGrounded = false;
+                distanceInAir = 0;
+                if (moveLeft) {
+                    move(-speedX, speedInAir);
+                } else if (moveRight) {
+                    move(speedX, speedInAir);
+                } else {
+                    move(0, speedInAir);
+                }
+            } else if (moveLeft) {
+                move(-speedX, 0);
+            } else if (moveRight) {
+                move(speedX, 0);
+            } else {
+                stop();
+            }
         } else {
-            stop();
+            if (moveLeft) {
+                move(-speedX, speedInAir);
+            } else if (moveRight) {
+                move(speedX, speedInAir);
+            } else {
+                stop();
+            }
         }
-
     }
 
     public Sprite getPlayer() {
