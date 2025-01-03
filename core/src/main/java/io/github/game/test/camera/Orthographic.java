@@ -69,4 +69,12 @@ public class Orthographic implements ApplicationListener {
         camera.position.set(x, y, 0);
         camera.update();
     }
+
+    public float getViewportWidth() {
+        return camera.viewportWidth;
+    }
+
+    public float getViewportHeight() {
+        return camera.viewportHeight;
+    }
 }
