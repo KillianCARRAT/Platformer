@@ -9,6 +9,7 @@ import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ScreenUtils;
 import io.github.game.test.camera.Orthographic;
 
@@ -33,15 +34,16 @@ public class GameScreen implements Screen {
 
     // Player
     private final Player player;
-    private float spawnPointX;
-    private float spawnPointY;
-    private float goalPointX;
-    private float goalPointY;
+    private Vector2 spawnPoint;
+    private Vector2 goalPoint;
 
 
     public GameScreen() {
+        spawnPoint = new Vector2(0, 0);
+        goalPoint = new Vector2(0, 0);
+
         background = new Texture(Utils.getInternalPath("graphics/tiles_background/background.png"));
-        
+
         camera = new Orthographic();
 
         map = new TmxMapLoader().load("maps/mapTuto.tmx");
@@ -61,7 +63,7 @@ public class GameScreen implements Screen {
         shapeRenderer = new ShapeRenderer();
 
         findMapPoint();
-        player = new Player(atlasPlayer, spawnPointX, spawnPointY, widthTile, heightTile, this);
+        player = new Player(atlasPlayer, widthTile, heightTile, this);
 
         cameraLimit();
 
@@ -74,13 +76,15 @@ public class GameScreen implements Screen {
                 float y = (float) object.getProperties().get("y");
 
                 if ("goalPoint".equals(object.getName())) {
-                    goalPointX = x + (float) widthTile / 2;
-                    goalPointY = y + (float) heightTile / 2;
+                    float goalPointX = x + (float) widthTile / 2;
+                    float goalPointY = y + (float) heightTile / 2;
+                    goalPoint = new Vector2(goalPointX, goalPointY);
                 }
 
                 if ("spawnPoint".equals(object.getName())) {
-                    spawnPointX = x + (float) widthTile / 2;
-                    spawnPointY = y + (float) heightTile / 2;
+                    float spawnPointX = x + (float) widthTile / 2;
+                    float spawnPointY = y + (float) heightTile / 2;
+                    spawnPoint = new Vector2(spawnPointX, spawnPointY);
                 }
             }
         }
@@ -212,5 +216,13 @@ public class GameScreen implements Screen {
             cameraY = worldHeight - cameraHalfHeight;
         }
         camera.centerOn(cameraX, cameraY);
+    }
+
+    public Vector2 getSpawnPoint() {
+        return spawnPoint;
+    }
+
+    public Vector2 getGoalPoint() {
+        return goalPoint;
     }
 }
